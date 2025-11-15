@@ -1,0 +1,81 @@
+seed: 2025
+device: "cuda"   # 自动切换：代码里会 if torch.cuda.is_available()
+data:
+  root: "data"
+  dataset_csv: "data/cicids2017_sample.csv"    # 你自己的CSV路径
+  label_col: "Label"
+  rare_labels: ["WebAttack", "Infiltration", "Heartbleed"]  # 稀缺类示例
+  n_clients: 6
+  dirichlet_alpha: 0.3
+  test_domain_csv: "data/unsw_nb15_sample.csv" # 跨域测试文件（先可留空/不用）
+train:
+  rounds: 50
+  local_epochs: 1
+  batch_size: 256
+  lr_agent: 1e-3
+  lr_gen: 1e-4
+
+gen:
+  steps: 500
+  cond_dim: 32
+  schedule: linear
+  synth_n: 4096
+  mix_ratio: 0.4          # ← 关键：让主代理吃到合成 raw
+  hetero_epochs: 1
+  dump_synth: true
+
+gate:
+  ks: 0.20                # 放宽些，先提覆盖率再调精度
+  mmd: 0.10
+
+router:
+  # 若用特征路由：给每个规则/小模型阈值；路由不确定时回退 flow
+  fallback: flow
+data:
+  n_clients: 6
+  root: "data"
+  label_col: "Label"
+  class_vocab:
+    - BENIGN
+    - DoS
+    - DDoS
+    - PortScan
+    - Bot
+    - Brute Force
+    - WebAttack
+    - Infiltration
+    - Heartbleed
+router:
+  mode: heuristic         # or "learned"
+  # 如果有时间相关列（比如一组滑动统计、时序桶）可填上，提升判别力；不填也能跑
+  temporal_cols: [20,21,22,23,24]
+  # 如果你的特征里有 “src_id / dst_id”（数值化过的主机/会话 id），可以指明列号；否则留空
+  graph_cols:
+    src: 0
+    dst: 1
+  thresholds:
+    temporal_var: 0.15    # 方差阈值，越大越偏 temporal
+    degree: 5             # 批内度数阈值，越大越偏 graph
+    sparsity: 0.85        # 稀疏度阈值，>= 则偏 flow
+gen:
+  synth_n: 2048
+  hetero_epochs: 1
+  mix_ratio: 0.3      # 主代理 raw 混入，提升稳定性
+gate:
+  ks: 1.0
+  mmd: 1.0
+  accept_raw_always: true
+
+eval:
+  test_every: 5          # 每 5 轮做一次测试集评测
+  overall_every: 1       # 每轮都做一次“路由→代理”的整体评测
+
+router:
+  mode: heuristic
+  tlist_len: 3
+  temporal_cols: [20,21,22,23,24]  # 可选
+  graph_cols: {src: 0, dst: 1}     # 可选
+  thresholds: {temporal_var: 0.15, degree: 5, sparsity: 0.85}
+eval:
+  la_tau: 1.0
+  logit_adjust: true

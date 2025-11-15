@@ -1,0 +1,31 @@
+# ===== 1. Python 虚拟环境 =====
+.venv/
+
+# ===== 2. 预训练模型、大权重 =====
+bert-base-uncased/
+*.pt
+*.pth
+*.bin
+
+# ===== 3. 大数据目录（原始数据、联邦切分、标签）=====
+data/
+TrafficLabelling/
+feddiffusion/data/
+
+# 训练过程输出：日志、合成数据、图等
+feddiffusion/outs/
+feddiffusion/logs/
+
+# ===== 4. 所有 CSV / TSV / 日志文件（通常都很大）=====
+*.csv
+*.tsv
+*.log
+*.out
+
+# ===== 5. Python 缓存 =====
+__pycache__/
+*.pyc
+
+# ===== 6. IDE 配置 =====
+.vscode/
+.idea/
